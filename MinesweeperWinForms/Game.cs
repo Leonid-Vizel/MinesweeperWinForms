@@ -103,6 +103,7 @@ namespace MinesweeperWinForms
         {
             foreach (GameCell cell in Cells)
             {
+                ю123
                 if (cell.IsMine)
                 {
                     cell.Label.Text = "💣";
