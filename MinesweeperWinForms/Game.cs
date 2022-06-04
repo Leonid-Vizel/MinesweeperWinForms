@@ -1,19 +1,18 @@
 ﻿using System;
-using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 
 namespace MinesweeperWinForms
 {
-    public class Game
+    public class Game : IDisposable
     {
-        private const int side = 20;
+        private int side;
         private bool gameEnded;
         public GameCell[,] Cells { get; private set; }
 
-
-        public Game(Control parent, int width, int height, int mines)
+        public Game(Control parent, int width, int height, int mines, int side)
         {
+            this.side = side;
             Cells = new GameCell[width, height];
             bool[,] mineMap = LocateMines(width, height, mines);
             byte[,] numberMap = CalculateMineMap(mineMap);
@@ -24,6 +23,14 @@ namespace MinesweeperWinForms
                     Cells[x, y] = new GameCell(mineMap[x, y], numberMap[x, y]);
                     ApplyLabelSetting(parent, x, y, Cells[x, y]);
                 }
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach(GameCell cell in Cells)
+            {
+                cell.Dispose();
             }
         }
 
@@ -105,7 +112,18 @@ namespace MinesweeperWinForms
             {
                 if (cell.IsMine)
                 {
-                    cell.Label.Text = "💣";
+                    cell.Open();
+                }
+            }
+        }
+
+        private void FlagAllMines()
+        {
+            foreach (GameCell cell in Cells)
+            {
+                if (cell.IsMine)
+                {
+                    cell.Flag(true);
                 }
             }
         }
@@ -124,10 +142,9 @@ namespace MinesweeperWinForms
 
         private void OpenCellRecursive(int x, int y, GameCell cell, bool inital = false)
         {
-            cell.Label.BackColor = Color.Gray;
+            cell.Open();
             if (cell.MinesAround > 0)
             {
-                cell.Label.Text = cell.MinesAround.ToString();
                 if (!inital)
                 {
                     return;
@@ -180,11 +197,7 @@ namespace MinesweeperWinForms
             cell.Label.BorderStyle = BorderStyle.FixedSingle;
             cell.Label.MouseClick += (s, e) =>
             {
-                if (gameEnded)
-                {
-                    return;
-                }
-                if (cell.Label.BackColor == Color.Gray)
+                if (gameEnded || cell.Label.BackColor == Color.Gray || cell.Label.Text.Equals("🚩"))
                 {
                     return;
                 }
@@ -200,19 +213,13 @@ namespace MinesweeperWinForms
                     OpenCellRecursive(x, y, cell, true);
                     if (CheckAllOpened())
                     {
+                        FlagAllMines();
                         gameEnded = true;
                         MessageBox.Show("Победа!");
                     }
                     return;
                 }
-                if (cell.Label.Text.Equals("🚩"))
-                {
-                    cell.Label.Text = "";
-                }
-                else
-                {
-                    cell.Label.Text = "🚩";
-                }
+                cell.Flag();
             };
             parent.Controls.Add(cell.Label);
 
