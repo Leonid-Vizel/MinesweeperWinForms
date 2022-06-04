@@ -197,11 +197,11 @@ namespace MinesweeperWinForms
             cell.Label.BorderStyle = BorderStyle.FixedSingle;
             cell.Label.MouseClick += (s, e) =>
             {
-                if (gameEnded || cell.Label.BackColor == Color.Gray || cell.Label.Text.Equals("🚩"))
+                if (gameEnded || cell.Label.BackColor == Color.Gray)
                 {
                     return;
                 }
-                if (e.Button == MouseButtons.Left)
+                if (e.Button == MouseButtons.Left && !cell.Label.Text.Equals("🚩"))
                 {
                     if (cell.IsMine)
                     {
